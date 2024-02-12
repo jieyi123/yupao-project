@@ -5,7 +5,6 @@ import BasicLayout from "./layouts/BasicLayout.vue";
 
 <template>
 <BasicLayout/>
-
 </template>
 
 <style scoped>
