@@ -9,7 +9,7 @@ spring:
     password: root
   mvc:
     pathmatch:
-      matching-strategy: ANT_PATH_MATCHER
+      matching-strategy: ANT_PATH_MATCHER #整合knife4j问题
   # session 失效时间（分钟）
   session:
     timeout: 86400
@@ -19,6 +19,8 @@ spring:
     port: 6379
     host: localhost
     database: 0
+  profiles:
+    active: dev
 server:
   port: 7529
   servlet:
