@@ -18,6 +18,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -355,6 +356,16 @@ public class UserController {
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
     }
+
+    @GetMapping("/search/tags")
+    public BaseResponse<List<User>> searchTags(@RequestParam(required=false) List<String> tags){
+        if (CollectionUtils.isEmpty(tags)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        List<User> users = userService.searchUserByTagsMemory(tags);
+        return ResultUtils.success(users);
+    }
+
 
     // endregion
 }

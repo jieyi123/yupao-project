@@ -360,9 +360,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safeUser.setGender(user.getGender());
         safeUser.setPhone(user.getPhone());
         safeUser.setEmail(user.getEmail());
+        safeUser.setTags(user.getTags());
         safeUser.setUserRole(user.getUserRole());
         safeUser.setCreateTime(user.getCreateTime());
         safeUser.setUserRole(user.getUserRole());
+        safeUser.setProfile(user.getProfile());
         return safeUser;
     }
 

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.pjieyi.yupao.mapper.UserMapper">
+<mapper namespace="com.pjieyi.yupao.model.entity.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.pjieyi.yupao.model.entity.User">
             <id property="id" column="id" jdbcType="BIGINT"/>
@@ -15,6 +15,7 @@
             <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
             <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
             <result property="tags" column="tags" jdbcType="VARCHAR"/>
+            <result property="profile" column="profile" jdbcType="VARCHAR"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
@@ -24,7 +25,7 @@
         id,userName,userAccount,
         phone,email,userAvatar,
         gender,userRole,userPassword,
-        tags,createTime,updateTime,
-        isDelete
+        tags,profile,createTime,
+        updateTime,isDelete
     </sql>
 </mapper>
