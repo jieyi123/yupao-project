@@ -404,8 +404,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (StringUtils.isEmpty(userTags)) {
                 return false;
             }
+            userTags=userTags.toLowerCase();
             for (String tag : tagNameList) {
-                if (!userTags.contains(tag)) {
+                if (!userTags.contains(tag.toLowerCase())) {
                     return false;
                 }
             }

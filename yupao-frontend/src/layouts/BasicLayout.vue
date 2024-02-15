@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import {showSuccessToast} from "vant";
+import {showSuccessToast} from "vant";
   import {useRouter} from "vue-router";
   const router=useRouter();
   const onClickLeft=()=>{

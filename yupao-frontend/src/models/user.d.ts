@@ -3,9 +3,9 @@
  */
 export type UserType = {
     id: number;
-    username: string;
+    userName: string;
     userAccount: string;
-    avatarUrl?: string;
+    userAvatar?: string;
     profile?: string;
     gender:number;
     phone: string;

@@ -53,9 +53,10 @@ public class UserUpdateRequest implements Serializable {
     private String userRole;
 
     /**
-     * 密码
+     * 个人简介
      */
-    private String userPassword;
+    private String profile;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
+import com.pjieyi.yupao.annotation.AuthCheck;
 import com.pjieyi.yupao.common.BaseResponse;
 import com.pjieyi.yupao.common.DeleteRequest;
 import com.pjieyi.yupao.common.ErrorCode;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 用户接口
@@ -77,24 +79,31 @@ public class UserController {
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        if (userLoginRequest.getType().equals("account")) {
-            String userAccount = userLoginRequest.getUserAccount();
-            String userPassword = userLoginRequest.getUserPassword();
-            if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR);
-            }
-            User user = userService.userLogin(userAccount, userPassword, request);
-            return ResultUtils.success(user);
-        }else{ //手机号登录
-            String phone = userLoginRequest.getPhone();
-            String captcha = userLoginRequest.getCaptcha();
-            if (StringUtils.isAnyBlank(phone,captcha)){
-                throw new BusinessException(ErrorCode.PARAMS_ERROR);
-            }
-            User user=userService.userLogin(request,phone,captcha);
-            return ResultUtils.success(user);
-
+        //if (userLoginRequest.getType().equals("account")) {
+        //    String userAccount = userLoginRequest.getUserAccount();
+        //    String userPassword = userLoginRequest.getUserPassword();
+        //    if (StringUtils.isAnyBlank(userAccount, userPassword)) {
+        //        throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        //    }
+        //    User user = userService.userLogin(userAccount, userPassword, request);
+        //    return ResultUtils.success(user);
+        //}else{ //手机号登录
+        //    String phone = userLoginRequest.getPhone();
+        //    String captcha = userLoginRequest.getCaptcha();
+        //    if (StringUtils.isAnyBlank(phone,captcha)){
+        //        throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        //    }
+        //    User user=userService.userLogin(request,phone,captcha);
+        //    return ResultUtils.success(user);
+        //
+        //}
+        String userAccount = userLoginRequest.getUserAccount();
+        String userPassword = userLoginRequest.getUserPassword();
+        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        User user = userService.userLogin(userAccount, userPassword, request);
+        return ResultUtils.success(user);
     }
 
 
@@ -187,7 +196,7 @@ public class UserController {
      * @param request
      * @return
      */
-    @GetMapping("/get/login")
+    @GetMapping("/current")
     public BaseResponse<UserVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         UserVO userVO = new UserVO();
@@ -226,6 +235,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/delete")
+    @AuthCheck(mustRole = "admin")
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -245,8 +255,20 @@ public class UserController {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //判断用户是否存在
+        if (userService.getById(userUpdateRequest.getId())==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
+        User loginUser = userService.getLoginUser(request);
+        //if (!userService.isAdmin(request)){
+        //    throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        //}
+        //只有管理员和当前用户可以修改自己的信息
+        if (loginUser.getId()!= user.getId() && !userService.isAdmin(request)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
         boolean result = userService.updateById(user);
         return ResultUtils.success(result);
     }
@@ -357,13 +379,32 @@ public class UserController {
         return ResultUtils.success(userVOPage);
     }
 
+    /**
+     * 根据标签搜索用户
+     * @param tagNameList
+     * @return
+     */
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchTags(@RequestParam(required=false) List<String> tags){
-        if (CollectionUtils.isEmpty(tags)){
+    public BaseResponse<List<User>> searchTags(@RequestParam(required=false) List<String> tagNameList){
+        if (CollectionUtils.isEmpty(tagNameList)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        List<User> users = userService.searchUserByTagsMemory(tags);
+        List<User> users = userService.searchUserByTagsMemory(tagNameList);
         return ResultUtils.success(users);
+    }
+
+    /**
+     * 主页用户推荐
+     * @param pageSize 每页条数
+     * @param pageNum 页码
+     * @return
+     */
+    @GetMapping("/recommend")
+    public BaseResponse<List<User>> recommendUser(int pageSize,int pageNum){
+        Page page=new Page(pageNum,pageSize);
+        Page<User> userList = userService.page(page);
+        List<User> safeUser = userList.getRecords().stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
+        return ResultUtils.success(safeUser);
     }
 
 

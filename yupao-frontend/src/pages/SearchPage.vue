@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {ref} from "vue";
+import {useRouter} from "vue-router";
+import {showFailToast} from "vant";
 
 const searchText = ref('');
 
@@ -35,10 +37,14 @@ const originTagList = [
     ],
   },
 ];
+const router = useRouter()
 
 //标签列表
 let tagList = ref(originTagList);
-// 移除标签
+/**
+ * 移除标签
+ * @param tag
+ */
 const doClose = (tag) => {
   activeIds.value = activeIds.value.filter(item => {
     return item !== tag;
@@ -60,7 +66,21 @@ const onCancel = () => {
   searchText.value = '';
   tagList.value = originTagList;
 };
-
+/**
+ * 执行搜索
+ */
+const doSearchResult = () => {
+  if (activeIds.value.length===0){
+    showFailToast("标签不能为空");
+  }else {
+    router.push({
+      path: '/user/list',
+      query: {
+        tags: activeIds.value
+      }
+    })
+  }
+}
 </script>
 
 <template>
@@ -91,7 +111,7 @@ const onCancel = () => {
       :items="tagList"
   />
   <div style="padding: 12px">
-    <van-button block type="primary" @click="">搜索</van-button>
+    <van-button block type="primary" @click="doSearchResult">搜索</van-button>
   </div>
 
 </template>
