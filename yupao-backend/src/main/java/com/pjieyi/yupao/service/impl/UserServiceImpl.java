@@ -1,6 +1,7 @@
 package com.pjieyi.yupao.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pjieyi.yupao.common.ErrorCode;
 import com.pjieyi.yupao.mapper.UserMapper;
@@ -11,6 +12,8 @@ import com.pjieyi.yupao.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -21,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.pjieyi.yupao.constant.UserConstant.ADMIN_ROLE;
@@ -42,6 +46,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
 
 
     private  static  String code="1231";
@@ -413,6 +419,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return true;
         }).collect(Collectors.toList());
         return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
+    }
+
+    /**
+     * 推荐用户
+     * @param pageNum 页码
+     * @param pageSize 每页条数
+     * @return
+     */
+    @Override
+    public Page<User> recommendUser(int pageNum, int pageSize, HttpServletRequest request){
+        if (pageNum<0 || pageSize<0){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //redis查询
+        ValueOperations<String,Object> valueOperations = redisTemplate.opsForValue();
+        String redisKey=String.format("yupao:user:recommend:%s",getLoginUser(request).getId());
+        Page<User> userPage = (Page<User>)valueOperations.get(redisKey);
+        //有缓存直接拿缓存数据
+        if (userPage!=null){
+            return userPage;
+        }
+        //没有缓存 增加缓存数据
+        userPage = this.page(new Page<>(pageNum, pageSize));
+        List<User> safeUser = userPage.getRecords().stream().map(this::getSafetyUser).collect(Collectors.toList());
+        userPage.setRecords(safeUser);
+        try {
+            valueOperations.set(redisKey,userPage,300, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("redis set key error",e);
+        }
+        return userPage;
     }
 
 }

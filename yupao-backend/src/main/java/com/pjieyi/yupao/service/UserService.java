@@ -1,6 +1,7 @@
 package com.pjieyi.yupao.service;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.pjieyi.yupao.model.dto.response.CaptureResponse;
 import com.pjieyi.yupao.model.entity.User;
@@ -121,4 +122,12 @@ public interface UserService extends IService<User> {
     List<User> searchUserByTagsQuery(List<String> tagNameList);
 
     List<User> searchUserByTagsMemory(List<String> tagNameList);
+
+    /**
+     * 推荐用户
+     * @param pageNum 页码
+     * @param pageSize 每页条数
+     * @return
+     */
+    Page<User> recommendUser(int pageNum, int pageSize, HttpServletRequest request);
 }

@@ -400,11 +400,8 @@ public class UserController {
      * @return
      */
     @GetMapping("/recommend")
-    public BaseResponse<List<User>> recommendUser(int pageSize,int pageNum){
-        Page page=new Page(pageNum,pageSize);
-        Page<User> userList = userService.page(page);
-        List<User> safeUser = userList.getRecords().stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
-        return ResultUtils.success(safeUser);
+    public BaseResponse<Page<User>> recommendUser(int pageSize,int pageNum,HttpServletRequest request){
+        return ResultUtils.success(userService.recommendUser(pageNum,pageSize,request));
     }
 
 
