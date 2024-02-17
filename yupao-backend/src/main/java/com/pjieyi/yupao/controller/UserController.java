@@ -262,10 +262,6 @@ public class UserController {
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
         User loginUser = userService.getLoginUser(request);
-        //if (!userService.isAdmin(request)){
-        //    throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        //}
-        //只有管理员和当前用户可以修改自己的信息
         if (loginUser.getId()!= user.getId() && !userService.isAdmin(request)){
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }

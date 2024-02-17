@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.pjieyi.yupao.constant.CommonConstant.SALT;
 import static com.pjieyi.yupao.constant.UserConstant.ADMIN_ROLE;
 import static com.pjieyi.yupao.constant.UserConstant.USER_LOGIN_STATE;
 import static com.pjieyi.yupao.utils.AliyunIdentifyCode.getParams;
@@ -52,10 +53,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     private  static  String code="1231";
 
-    /**
-     * 盐值，混淆密码
-     */
-    private static final String SALT = "pjieyi";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword,String phone,String verifyCode) {

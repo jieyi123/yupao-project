@@ -4,8 +4,7 @@ import com.pjieyi.yupao.constant.CommonConstant;
 import lombok.Data;
 
 /**
- * 分页请求
- *
+ * 通用分页请求
  * @author pjieyi
  */
 @Data

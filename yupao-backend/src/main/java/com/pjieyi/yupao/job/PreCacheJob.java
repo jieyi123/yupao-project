@@ -45,7 +45,7 @@ public class PreCacheJob {
             if (lock.tryLock(0,-1,TimeUnit.MILLISECONDS)){
                 log.info(Thread.currentThread().getId()+"拿到锁");
                 for (Long userId:mainUserList){
-                    //为`热点用户预热20条推荐数据
+                    //为热点用户预热20条推荐数据
                     Page<User> userPage = userService.page(new Page<>(1, 10));
                     String redisKey=String.format("yupao:user:recommend:%s",userId);
                     try {
@@ -59,6 +59,7 @@ public class PreCacheJob {
         } catch (InterruptedException e) {
             log.error("lock error:"+e.getMessage());
         }finally {
+            //用完锁一定要释放
             //释放自己的锁
             if (lock.isHeldByCurrentThread()){ //是否是当前线程
                 lock.unlock();

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 用户更新请求
@@ -42,6 +43,7 @@ public class UserUpdateRequest implements Serializable {
      */
     private String phone;
 
+    private Date time;
     /**
      * 性别
      */
