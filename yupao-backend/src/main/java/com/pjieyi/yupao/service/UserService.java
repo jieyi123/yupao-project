@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.pjieyi.yupao.model.dto.response.CaptureResponse;
 import com.pjieyi.yupao.model.entity.User;
+import com.pjieyi.yupao.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -130,4 +131,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     Page<User> recommendUser(int pageNum, int pageSize, HttpServletRequest request);
+
+    /**
+     * 根据标签匹配用户
+     * @param num 匹配用户的条数
+     * @param loginUser 当前用户
+     * @return 脱敏后的用户信息
+     */
+    List<UserVO> matchUsers(Integer num, User loginUser);
+
 }

@@ -23,6 +23,9 @@ public class TeamQueryRequest extends PageRequest implements Serializable {
      */
     private String description;
 
+    /**
+     * 联合搜索
+     */
     private String searchText;
 
     /**

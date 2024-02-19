@@ -3,30 +3,32 @@ package com.pjieyi.yupao.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.pjieyi.yupao.common.ErrorCode;
 import com.pjieyi.yupao.mapper.UserMapper;
 import com.pjieyi.yupao.model.dto.response.CaptureResponse;
 import com.pjieyi.yupao.model.entity.User;
+import com.pjieyi.yupao.model.vo.UserVO;
 import com.pjieyi.yupao.service.UserService;
 import com.pjieyi.yupao.exception.BusinessException;
+import com.pjieyi.yupao.utils.AlgorithmUtils;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import static com.pjieyi.yupao.constant.CommonConstant.SALT;
 import static com.pjieyi.yupao.constant.UserConstant.ADMIN_ROLE;
 import static com.pjieyi.yupao.constant.UserConstant.USER_LOGIN_STATE;
@@ -280,7 +282,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-
         return getSafetyUser(currentUser);
     }
 
@@ -447,6 +448,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             log.error("redis set key error",e);
         }
         return userPage;
+    }
+
+    /**
+     * 根据标签匹配最佳用户
+     * @param num 匹配用户的条数
+     * @param loginUser 当前用户
+     * @return 脱敏后的用户信息
+     */
+    @Override
+    public List<UserVO> matchUsers(Integer num, User loginUser) {
+        if (loginUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QueryWrapper<User> queryWrapper=new QueryWrapper<>();
+        queryWrapper.isNotNull("tags");
+        //查询数据量大时，只查询需要的列，可以优化查询的速度
+        queryWrapper.select("id","tags");
+        //不要在数据量大的时候循环输出日志 可以极大优化查询速度
+        //查询100w条数据打印日志60s 不打印日志25s  只查需要的列10s
+        List<User> userList = this.list(queryWrapper);
+        //json样式的字符串转成集合
+        Gson gson=new Gson();
+        List<String> tagList=gson.fromJson(loginUser.getTags(),new TypeToken<List<String>>(){}.getType());
+        //Pair可以通过取出value进行排序
+        List<Pair<User,Long>> pairList=new ArrayList<>();
+        //计算所有用户与当前用户标签的相似度
+        userList.forEach(user -> {
+            //当标签为空或当前用户为自己 不计算
+            String tags = user.getTags();
+            if (tags==null || Objects.equals(user.getId(), loginUser.getId())){
+                return;
+            }
+            List<String> tagList2=gson.fromJson(tags,new TypeToken<List<String>>(){}.getType());
+            //计算相似度
+            long distance = AlgorithmUtils.minDistance(tagList, tagList2);
+            pairList.add(new Pair<>(user,distance));
+        });
+        //对pairList所有用户距离进行升序排序  距离越小说明与当前用户越接近
+        List<Pair<User,Long>> sortPairList=pairList.stream()
+                .sorted((o1, o2) -> (int)(o1.getValue()-o2.getValue()))
+                .limit(num).collect(Collectors.toList());
+        //排序好的用户id
+        List<Long> userIds = sortPairList.stream().map(pair->pair.getKey().getId()).collect(Collectors.toList());
+        QueryWrapper<User> userQueryWrapper=new QueryWrapper<>();
+        userQueryWrapper.in("id",userIds);
+        //前面只查询了id和tags列没有完整的用户信息
+        //查询推荐用户的完整信息  key--userId  value--List<UserVO>
+        //数据库查询出来的用户没有顺序
+        Map<Long, List<UserVO>> userIdUserListMap = this.list(userQueryWrapper).stream().map(user -> {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user, userVO);
+            return userVO;
+        }).collect(Collectors.groupingBy(UserVO::getId));
+        List<UserVO> finalUserList=new ArrayList<>();
+        //重新筛选出排好顺序的用户
+        for (long userId:userIds){
+            finalUserList.add(userIdUserListMap.get(userId).get(0));
+        }
+        return finalUserList;
     }
 
 }

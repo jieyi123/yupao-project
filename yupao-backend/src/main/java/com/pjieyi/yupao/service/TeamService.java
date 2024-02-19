@@ -1,7 +1,6 @@
 package com.pjieyi.yupao.service;
 
-import com.pjieyi.yupao.common.BaseResponse;
-import com.pjieyi.yupao.model.dto.team.TeamAddRequest;
+import com.pjieyi.yupao.common.DeleteRequest;
 import com.pjieyi.yupao.model.dto.team.TeamJoinRequest;
 import com.pjieyi.yupao.model.dto.team.TeamQueryRequest;
 import com.pjieyi.yupao.model.dto.team.TeamUpdateRequest;
@@ -10,7 +9,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.pjieyi.yupao.model.entity.User;
 import com.pjieyi.yupao.model.vo.TeamUserVO;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -51,4 +49,35 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 退出队伍
+     * @param deleteRequest
+     * @param loginUser
+     * @return
+     */
+    boolean quitTeam(DeleteRequest deleteRequest, User loginUser);
+
+    /**
+     * 队长解散队伍
+     * @param deleteRequest
+     * @param loginUser
+     * @return
+     */
+    boolean deleteTeam(DeleteRequest deleteRequest, User loginUser);
+
+    /**
+     * 获取当前用户创建的队伍信息
+     * @param loginUser
+     * @return
+     */
+    List<TeamUserVO> listMyCreateTeams(User loginUser);
+
+    /**
+     * 获取当前用户加入的队伍信息
+     * @param loginUser
+     * @return
+     */
+    List<TeamUserVO> listMyJoinTeams(User loginUser);
+
 }

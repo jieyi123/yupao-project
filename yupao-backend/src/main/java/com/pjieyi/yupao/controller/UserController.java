@@ -396,8 +396,31 @@ public class UserController {
      * @return
      */
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUser(int pageSize,int pageNum,HttpServletRequest request){
+    public BaseResponse<Page<User>> recommendUsers(Integer pageSize,Integer pageNum,HttpServletRequest request){
+        if (pageSize==null || pageNum==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
         return ResultUtils.success(userService.recommendUser(pageNum,pageSize,request));
+    }
+
+    /**
+     * 根据标签匹配最佳用户
+     * @param num 推荐人数
+     * @param request
+     * @return
+     */
+    @GetMapping("/match")
+    public BaseResponse<List<UserVO>> matchUsers(Integer num,HttpServletRequest request){
+        if (num==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //可以防止缓存穿透
+        if (num<=0 || num>20){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        List<UserVO> userVOList=userService.matchUsers(num,loginUser);
+        return ResultUtils.success(userVOList);
     }
 
 
