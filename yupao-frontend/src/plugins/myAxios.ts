@@ -3,7 +3,7 @@ import {showFailToast, showNotify} from "vant";
 
 const isDev = process.env.NODE_ENV === 'development';
 const myAxios: AxiosInstance = axios.create({
-    baseURL: isDev ? 'http://localhost:7529/api' : 'http://partner-backend.originai.icu/api',
+    baseURL: isDev ? 'http://127.0.0.1:7529/api' : 'http://partner-backend.originai.icu/api',
 });
 
 myAxios.defaults.withCredentials = true; // 配置为true 发送请求的时候携带cookie
