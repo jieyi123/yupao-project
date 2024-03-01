@@ -16,16 +16,16 @@
 4. Redis 缓存
 5. Swagger + Knife4j 接口文档
 
-## 页面截图                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-
-![contents](.\images\2.png)
-
-![contents](.\images\6.png)
-
-![contents](.\images\3.png)
-
-![contents](.\images\1.png)
-
-![contents](.\images\4.png)
-
-![contents](.\images\5.png)
+## 页面截图                                                                                                                                                                              
+登录
+![登录](https://github.com/jieyi123/yupao-project/blob/master/images/2.png)
+个人信息
+![个人信息](https://github.com/jieyi123/yupao-project/blob/master/images/6.png)
+标签
+![标签](https://github.com/jieyi123/yupao-project/blob/master/images/3.png)
+主页
+![主页](https://github.com/jieyi123/yupao-project/blob/master/images/1.png)
+队伍
+![队伍](https://github.com/jieyi123/yupao-project/blob/master/images/4.png)
+队伍详情
+![队伍详情](https://github.com/jieyi123/yupao-project/blob/master/images/5.png)
