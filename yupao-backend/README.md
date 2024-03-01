@@ -30,6 +30,8 @@ Java SpringBoot 项目初始模板，整合了常用框架和示例代码，大�
 修改application.yml的配置
 生产环境 application-prod,yml
 
+![](..\images\1.png)
+
 
 
 

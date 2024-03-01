@@ -14,16 +14,18 @@
 2. SpringMVC + MyBatis + MyBatis Plus（提高开发效率）
 3. MySQL 数据库
 4. Redis 缓存
-5. Swagger + Knife4j 接口文档                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+5. Swagger + Knife4j 接口文档
 
-![](images\2.png)
+## 页面截图                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 
-![](images\6.png)
+![contents](.\images\2.png)
 
-![](images\3.png)
+![contents](.\images\6.png)
 
-![](images\1.png)
+![contents](.\images\3.png)
 
-![](images\1.png)
+![contents](.\images\1.png)
 
-![](images\5.png)
+![contents](.\images\4.png)
+
+![contents](.\images\5.png)
