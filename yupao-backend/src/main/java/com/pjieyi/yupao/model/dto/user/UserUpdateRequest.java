@@ -13,6 +13,7 @@ import java.util.Date;
  */
 @Data
 public class UserUpdateRequest implements Serializable {
+
     /**
      * id
      */
@@ -59,6 +60,7 @@ public class UserUpdateRequest implements Serializable {
      */
     private String profile;
 
+    private String code;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -29,5 +29,10 @@ public interface UserConstant {
      */
     String ADMIN_ROLE = "admin";
 
+    /**
+     * 验证码
+     */
+    String USER_LOGIN_CAPTCHA  ="user:login:captcha:";
+
     // endregion
 }

@@ -18,16 +18,16 @@ import java.io.InputStream;
 @Component
 public class AliyunOssUtil {
 
-    @Value("${aliyun.accessKeySecret}")
+    @Value("${aliyun.oss.accessKeySecret}")
     private    String accessKeySecret;
 
-    @Value("${aliyun.accessKeyId}")
+    @Value("${aliyun.oss.accessKeyId}")
     private  String accessKeyId;
     // Endpoint以华东1（杭州）为例，其它Region请按实际情况填写。
     private  String endpoint = "https://oss-cn-chengdu.aliyuncs.com";
     // 从环境变量中获取访问凭证。运行本代码示例之前，请确保已设置环境变量OSS_ACCESS_KEY_ID和OSS_ACCESS_KEY_SECRET。
     // 填写Bucket名称，例如examplebucket。
-    @Value("${aliyun.bucketName}")
+    @Value("${aliyun.oss.bucketName}")
     private  String bucketName;
     // 填写Object完整路径，完整路径中不能包含Bucket名称，例如exampledir/exampleobject.txt。
     //OSS中存储的位置

@@ -70,5 +70,10 @@ public class UserQueryRequest extends PageRequest implements Serializable {
      */
     private Date updateTime;
 
+    /**
+     * 当前页号
+     */
+    private long currentPage ;
+
     private static final long serialVersionUID = 1L;
 }

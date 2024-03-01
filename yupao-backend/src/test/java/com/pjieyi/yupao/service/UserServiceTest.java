@@ -11,8 +11,6 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.pjieyi.yupao.utils.SMSUtils.sendMessage;
-
 /**
  * 用户服务测试
  *

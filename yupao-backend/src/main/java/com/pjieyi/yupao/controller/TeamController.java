@@ -24,7 +24,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -65,7 +68,7 @@ public class TeamController {
     }
 
     /**
-     * 查询队伍信息
+     * 推荐队伍
      * @param teamQueryRequest
      * @param request
      * @return
@@ -79,7 +82,66 @@ public class TeamController {
         if (loginUser==null){
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        return ResultUtils.success(teamService.listTeams(teamQueryRequest,loginUser));
+        List<TeamUserVO> teamUserVOList = teamService.listTeams(teamQueryRequest, loginUser);
+        getJoinNumAndIsJoin(loginUser, teamUserVOList);
+        //筛选出未加入的队伍
+        teamUserVOList=teamUserVOList.stream().filter(teamUserVO -> !teamUserVO.isHasJoin()).collect(Collectors.toList());
+        return ResultUtils.success(teamUserVOList);
+    }
+
+
+    //  前端界面展示 队伍人数 和当前用户是否加入队伍 队伍用户信息
+    private void getJoinNumAndIsJoin(User loginUser, List<TeamUserVO> teamUserVOList) {
+        if (teamUserVOList==null || teamUserVOList.size()==0){
+            return;
+        }
+
+        //队伍id集合
+        List<Long> userTeamIds = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+
+        //获取队伍已加入人数
+        QueryWrapper<UserTeam> userTeamQueryWrapper=new QueryWrapper<>();
+        userTeamQueryWrapper.in("teamId",userTeamIds);
+        //key-->teamId  value-->UserTeamList
+        Map<Long, List<UserTeam>> listMap = userTeamService.list(userTeamQueryWrapper).stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
+
+
+        //判断用户是否加入队伍 (isJoin前端按钮展示)
+        QueryWrapper<UserTeam> queryWrapper=new QueryWrapper<>();
+        queryWrapper.eq("userId", loginUser.getId());
+        queryWrapper.in("teamId",userTeamIds);
+        //当前用户已加入的队伍的teamId集合(包括自己创建的用户)
+        Set<Long> hasJoinTeamIdSet = userTeamService.list(queryWrapper).stream().map(UserTeam::getTeamId).collect(Collectors.toSet());
+        teamUserVOList.forEach(teamUserVO -> {
+            //是否加入队伍
+            boolean hasJoin=hasJoinTeamIdSet.contains(teamUserVO.getId());
+            teamUserVO.setHasJoin(hasJoin);
+            Long teamId = teamUserVO.getId();
+            //队伍人数
+            teamUserVO.setHasJoinNum(listMap.getOrDefault(teamId,new ArrayList<>()).size());
+            //队伍用户信息
+            //队伍人员信息
+            List<UserVO> teamUsers=new ArrayList<>();
+            Set<Long> userIds = listMap.get(teamUserVO.getId()).stream().map(UserTeam::getUserId).collect(Collectors.toSet());
+            userService.listByIds(userIds).forEach(user -> {
+                UserVO userVO=new UserVO();
+                BeanUtils.copyProperties(user,userVO);
+                teamUsers.add(userVO);
+            });
+            teamUserVO.setJoinUserList(teamUsers);
+        });
+    }
+
+    @GetMapping("/get")
+    public BaseResponse<Team> getTeam(long id,HttpServletRequest request){
+        if (id<=0){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return ResultUtils.success(teamService.getById(id));
     }
 
     /**
@@ -195,7 +257,8 @@ public class TeamController {
     @GetMapping("/list/my/create")
     public BaseResponse<List<TeamUserVO>> listMyCreateTeams(HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
-        List<TeamUserVO>teamUserVOList=teamService.listMyCreateTeams(loginUser);
+        List<TeamUserVO> teamUserVOList=teamService.listMyCreateTeams(loginUser);
+        getJoinNumAndIsJoin(loginUser,teamUserVOList);
         return ResultUtils.success(teamUserVOList);
     }
 
@@ -207,7 +270,11 @@ public class TeamController {
     @GetMapping("/list/my/join")
     public BaseResponse<List<TeamUserVO>> listMyJoinTeams(HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
+        if (loginUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
         List<TeamUserVO> teamUserVOList=teamService.listMyJoinTeams(loginUser);
+            getJoinNumAndIsJoin(loginUser, teamUserVOList);
         return ResultUtils.success(teamUserVOList);
     }
 

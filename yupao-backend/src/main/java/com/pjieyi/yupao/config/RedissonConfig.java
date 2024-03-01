@@ -26,9 +26,11 @@ public class RedissonConfig {
         //1.创建配置
         Config config = new Config();
         // use "redis://127.0.0.1:7181 for SSL connection
+        //String redisAddress="redis://47.108.67.9:6379";
+        //String redisAddress="redis://127.0.0.1:6379";
         String redisAddress=String.format("redis://%s:%s",host,port);
-        config.useSingleServer().setAddress(redisAddress).setDatabase(3);
+        config.useSingleServer().setDatabase(3).setAddress(redisAddress);
         //2.创建Redisson实例
-        return Redisson.create();
+        return Redisson.create(config);
     }
 }

@@ -27,7 +27,7 @@ public interface TeamService extends IService<Team> {
     Long addTeam(Team team, User loginUser);
 
     /**
-     * 查询队伍信息
+     * 推荐队伍
      * @param teamQueryRequest
      * @param loginUser
      * @return

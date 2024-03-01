@@ -1,5 +1,6 @@
 package com.pjieyi.yupao.model.dto.team;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -32,6 +33,7 @@ public class TeamUpdateRequest implements Serializable {
     /**
      * 过期时间
      */
+    @JsonFormat(timezone = "GMT+8")
     private Date expireTime;
 
 

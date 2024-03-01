@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author pjieyi
@@ -57,5 +58,22 @@ public class TeamUserVO implements Serializable {
      * 创建人信息
      */
     private UserVO createUser;
+
+    /**
+     * 额外字段(前端界面展示)
+     * 是否已加入队伍
+     */
+    private boolean hasJoin=false;
+
+    /**
+     * 额外字段(前端界面展示)
+     * 已加入的队伍人数
+     */
+    private Integer hasJoinNum;
+
+    /**
+     * 加入队伍的人员信息
+     */
+    private List<UserVO> joinUserList;
 
 }

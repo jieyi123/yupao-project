@@ -7,6 +7,7 @@ export type TeamType = {
     id: number;
     name: string;
     description: string;
+    userId: number;
     expireTime?: Date;
     maxNum: number;
     password?: string,
@@ -14,6 +15,17 @@ export type TeamType = {
     status: number;
     createTime: Date;
     updateTime: Date;
+    /**
+     * 用户是否已加入
+     */
+    hasJoin?:boolean;
     createUser?: UserType;
+    /**
+     * 加入人数
+     */
     hasJoinNum?: number;
+    /**
+     * 加入用户的信息列表
+     */
+    joinUserList?: UserType[]
 };

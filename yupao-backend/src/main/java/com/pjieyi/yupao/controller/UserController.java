@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.pjieyi.yupao.annotation.AuthCheck;
 import com.pjieyi.yupao.common.BaseResponse;
 import com.pjieyi.yupao.common.DeleteRequest;
@@ -19,14 +21,19 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.pjieyi.yupao.constant.UserConstant.USER_LOGIN_CAPTCHA;
+import static com.pjieyi.yupao.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户接口
@@ -39,6 +46,9 @@ public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
 
     // region 登录相关
 
@@ -133,12 +143,12 @@ public class UserController {
     }
 
     /**
-     * 找回密码
+     * 忘记密码
      * @param retrievePasswordRequest
      * @return
      */
     @PostMapping("/retrievePassword")
-    public BaseResponse retrievePassword(@RequestBody RetrievePasswordRequest retrievePasswordRequest){
+    public BaseResponse retrievePassword(@RequestBody RetrievePasswordRequest retrievePasswordRequest,HttpServletRequest request){
         if (retrievePasswordRequest==null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -151,6 +161,10 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long userId = userService.retrievePassword(userPassword, checkPassword, phone, verifyCode);
+        if (request!=null && request.getSession().getAttribute(USER_LOGIN_STATE) != null) {
+            // 如果当前用户已经登录 移除登录态
+            request.getSession().removeAttribute(USER_LOGIN_STATE);
+        }
         return ResultUtils.success(userId);
     }
 
@@ -160,7 +174,7 @@ public class UserController {
      * @return 用户id
      */
     @PostMapping("/updatePassword")
-    public BaseResponse updatePassword(@RequestBody UserPasswordRequest passwordRequest){
+    public BaseResponse updatePassword(@RequestBody UserPasswordRequest passwordRequest,HttpServletRequest request){
         if (passwordRequest==null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -173,6 +187,8 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         userService.updatePassword(id,oldPassword,newPassword,confirmPassword);
+        //清空session
+        this.userLogout(request);
         return ResultUtils.success(id);
     }
 
@@ -259,10 +275,41 @@ public class UserController {
         if (userService.getById(userUpdateRequest.getId())==null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        String userName=userUpdateRequest.getUserName();
+        if (StringUtils.isNotEmpty(userName)){
+            //检查是否存在该昵称
+            LambdaQueryWrapper<User> queryWrapper=new LambdaQueryWrapper<>();
+            queryWrapper.eq(User::getUserName,userName);
+            long count = userService.count(queryWrapper);
+            if (count>0){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"昵称已存在");
+            }
+        }
+        String phone = userUpdateRequest.getPhone();
+        String code = userUpdateRequest.getCode();
+        if (StringUtils.isNotEmpty(phone)){
+            if (StringUtils.isBlank(code)){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"请发送验证码");
+            }
+            //检查验证码是否错误
+            if (!code.equals(redisTemplate.opsForValue().get(USER_LOGIN_CAPTCHA+phone))){
+                throw new BusinessException(ErrorCode.CODE_ERROR,"验证码错误");
+            }
+
+
+            //检查电话号码是否存在
+            LambdaQueryWrapper<User> queryWrapper=new LambdaQueryWrapper<>();
+            queryWrapper.eq(User::getPhone,phone);
+            long count = userService.count(queryWrapper);
+            if (count>0){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"手机号已被注册");
+            }
+        }
+
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
         User loginUser = userService.getLoginUser(request);
-        if (loginUser.getId()!= user.getId() && !userService.isAdmin(request)){
+        if (!loginUser.getId().equals(user.getId()) && !userService.isAdmin(request)){
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean result = userService.updateById(user);
@@ -320,12 +367,12 @@ public class UserController {
      */
     @GetMapping("/list/page")
     public BaseResponse<Page<UserVO>> listUserByPage(UserQueryRequest userQueryRequest, HttpServletRequest request) {
-        long current = 1;
+        long current=1;
         long size = 10;
         User userQuery = new User();
         if (userQueryRequest != null) {
             BeanUtils.copyProperties(userQueryRequest, userQuery);
-            current = userQueryRequest.getCurrent();
+            current = userQueryRequest.getCurrentPage();
             size = userQueryRequest.getPageSize();
         }
 
@@ -390,17 +437,68 @@ public class UserController {
     }
 
     /**
+     * 获取当前用户的标签
+     * @param request
+     * @return
+     */
+    @GetMapping("/tags")
+    public BaseResponse<List<String>> getUserTags(HttpServletRequest request){
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        User user = userService.getById(loginUser.getId());
+        if (user==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户不存在");
+        }
+        Gson gson=new Gson();
+        List<String> tagList=gson.fromJson(loginUser.getTags(),new TypeToken<List<String>>(){}.getType());
+        if (tagList==null){
+            tagList=new ArrayList<>();
+        }
+        return ResultUtils.success(tagList);
+    }
+
+
+    /**
+     * 修改当前用户的标签
+     * @param request
+     * @return
+     */
+    @GetMapping("/update/tags")
+    public BaseResponse<Boolean> updateUserTags(@RequestParam List<String> tagList,HttpServletRequest request){
+        if (CollectionUtils.isEmpty(tagList)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"标签为空");
+        }
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        User user = userService.getById(loginUser.getId());
+        if (user==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户不存在");
+        }
+        Gson gson=new Gson();
+        String userTags = gson.toJson(tagList);
+        loginUser.setTags(userTags);
+        boolean res = userService.updateById(loginUser);
+        if (!res){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        return ResultUtils.success(res);
+    }
+
+    /**
      * 主页用户推荐
-     * @param pageSize 每页条数
-     * @param pageNum 页码
+     * @param currentPage 页码
      * @return
      */
     @GetMapping("/recommend")
-    public BaseResponse<Page<User>> recommendUsers(Integer pageSize,Integer pageNum,HttpServletRequest request){
-        if (pageSize==null || pageNum==null){
+    public BaseResponse<Page<User>> recommendUsers(Integer currentPage,HttpServletRequest request){
+        if (currentPage==null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        return ResultUtils.success(userService.recommendUser(pageNum,pageSize,request));
+        return ResultUtils.success(userService.recommendUser(currentPage,10,request));
     }
 
     /**

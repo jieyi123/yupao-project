@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {showFailToast} from "vant";
+import qs from 'qs';
+import myAxios from "../plugins/myAxios.ts";
 
 const searchText = ref('');
 
@@ -11,13 +13,34 @@ const activeIds = ref([]);
 const activeIndex = ref(0);
 
 const originTagList = [
+
   {
-    text: '性别',
+    text: '职业',
     children: [
-      {text: '男', id: '男'},
-      {text: '女', id: '女'},
-    ],
-  },
+      {text: '医生', id: '医生'},
+      {text: '律师', id: '律师'},
+      {text: '教师', id: '教师'},
+      {text: '工程师', id: '工程师'},
+      {text: '程序员', id: '程序员'},
+      {text: '设计师', id: '设计师'},
+      {text: '销售', id: '销售'},
+      {text: '市场营销', id: '市场营销'},
+      {text: '会计师', id: '会计师'},
+      {text: '金融分析师', id: '金融分析师'},
+      {text: '投资银行家', id: '投资银行家'},
+      {text: '记者', id: '记者'},
+      {text: '编辑', id: '编辑'},
+      {text: '作家', id: '作家'},
+      {text: '演员', id: '演员'},
+      {text: '导演', id: '导演'},
+      {text: '音乐家', id: '音乐家'},
+      {text: '画家', id: '画家'},
+      {text: '建筑师', id: '建筑师'},
+      {text: '厨师', id: '厨师'},
+      {text: '学生', id: '学生'}
+    ]
+  }
+  ,
   {
     text: '年级',
     children: [
@@ -31,6 +54,13 @@ const originTagList = [
       {text: '研究生', id: '研究生'},
       {text: '在职', id: '在职'},
       {text: '找工作', id: '找工作'},
+    ],
+  },
+  {
+    text: '性别',
+    children: [
+      {text: '男', id: '男'},
+      {text: '女', id: '女'},
     ],
   },
   {
@@ -92,32 +122,6 @@ const originTagList = [
       {text: '羽毛球', id: '羽毛球'},
       {text: '网球', id: '网球'}
     ]
-  },
-  {
-    text: '职业',
-    children: [
-      {text: '医生', id: '医生'},
-      {text: '律师', id: '律师'},
-      {text: '教师', id: '教师'},
-      {text: '工程师', id: '工程师'},
-      {text: '程序员', id: '程序员'},
-      {text: '设计师', id: '设计师'},
-      {text: '销售', id: '销售'},
-      {text: '市场营销', id: '市场营销'},
-      {text: '会计师', id: '会计师'},
-      {text: '金融分析师', id: '金融分析师'},
-      {text: '投资银行家', id: '投资银行家'},
-      {text: '记者', id: '记者'},
-      {text: '编辑', id: '编辑'},
-      {text: '作家', id: '作家'},
-      {text: '演员', id: '演员'},
-      {text: '导演', id: '导演'},
-      {text: '音乐家', id: '音乐家'},
-      {text: '画家', id: '画家'},
-      {text: '建筑师', id: '建筑师'},
-      {text: '厨师', id: '厨师'},
-      {text: '学生', id: '学生'}
-    ]
   }
 ];
 const router = useRouter()
@@ -149,19 +153,36 @@ const onCancel = () => {
   searchText.value = '';
   tagList.value = originTagList;
 };
-/**
- * 执行搜索
- */
-const doSearchResult = () => {
-  if (activeIds.value.length===0){
-    showFailToast("标签不能为空");
-  }else {
-    router.push({
-      path: '/user/list',
-      query: {
-        tags: activeIds.value
-      }
-    })
+
+onMounted(async () => {
+  let res = await myAxios.get("/user/tags");
+  if (res?.code === 0) {
+    activeIds.value = res.data
+  }
+})
+
+const userDefinedTag = ref("")
+//自定义标签
+const addUserDefinedTag = () => {
+  if (userDefinedTag.value !== "") {
+    activeIds.value.push(userDefinedTag.value)
+    userDefinedTag.value = ""
+  } else {
+    showFailToast("请先输入标签名")
+  }
+}
+//修改用户标签
+const updateTag = async () => {
+  let res = await myAxios.get("/user/update/tags",{
+    params:{
+      tagList: activeIds.value
+    },
+    paramsSerializer: params => {
+      return qs.stringify(params, {indices: false})
+    }
+  });
+  if (res?.code === 0) {
+    await router.replace("/user")
   }
 }
 </script>
@@ -185,9 +206,9 @@ const doSearchResult = () => {
   <van-divider>已选标签</van-divider>
   <div v-if="activeIds.length === 0">请选择标签</div>
 
-  <van-row gutter="16" style="padding: 0 16px">
+  <van-row gutter="16" style="padding:0 16px">
     <van-col v-for="tag in activeIds">
-      <van-tag closeable size="medium" type="primary" @close="doClose(tag)" color="#7232dd">
+      <van-tag closeable size="small" type="primary" @close="doClose(tag)" color="#7232dd">
         {{ tag }}
       </van-tag>
     </van-col>
@@ -198,8 +219,16 @@ const doSearchResult = () => {
       v-model:main-active-index="activeIndex"
       :items="tagList"
   />
-  <div style="padding: 12px">
-    <van-button block type="primary" @click="doSearchResult">搜索</van-button>
+  <van-divider>自定义标签</van-divider>
+  <van-cell-group inset>
+    <van-field v-model="userDefinedTag" placeholder="请输入标签" style="padding-right: 5px">
+      <template #button>
+        <van-button size="small" type="primary" @click="addUserDefinedTag">添加</van-button>
+      </template>
+    </van-field>
+  </van-cell-group>
+  <div style="margin: 20px">
+    <van-button block type="primary" @click="updateTag">完成</van-button>
   </div>
 
 </template>
