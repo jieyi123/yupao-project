@@ -1,42 +1,63 @@
-# SpringBoot+Vue伙伴匹配系统
+# 用户匹配系统
+
+## 项目介绍
+
+ 许多热爱编程比赛的用户在参加比赛时常常面临没有队友的问题，这使得他们很难发挥自己的实力，也很难取得好成绩。同时，许多用户在寻找队友时也面临一些困难，比如无法找到合适的人选，或者无法与潜在的队友进行充分的交流和沟通。因此，希望通过该网站，为这些用户提供一个交流平台，帮助他们找到理想的队友，组建强大的编程团队，参加各种编程比赛，并最终实现自己的编程梦想。
+
+## 项目亮点
+
+* 使用 Redis 实现分布式 Session，解决集群间登录态同步问题；并使用 Hash 代替 String 来存储用户信息，节约了内存并便于单字段的修改。
+* 对于项目中复杂的集合处理（比如为队伍列表关联已加入队伍的用户），使用 Java 8 Stream API 和 Lambda 表达式来简化编码。
+* 使用 Redis 缓存首页高频访问的用户信息列表，将接口响应时长从 3220ms缩短至40ms。且通过自定义 Redis 序列化器来解决数据乱码、空间浪费的问题。
+* 为解决首次访问系统的用户主页加载过慢的问题，使用 Spring Scheduler 定时任务来实现缓存预热，并通过分布式锁保证多机部署时定时任务不会重复执行。
+* 为解决同一用户重复加入队伍、入队人数超限的问题，使用 Redisson 分布式锁来实现操作互斥，保证了接口幂等性。
+* 使用编辑距离算法实现了根据标签匹配最相似用户的功能，并通过优先队列来减少 TOP N 运算过程中的内存占用。
+* 使用 Knife4j + Swagger 自动生成后端接口文档，并通过编写 ApiOperation 等注解补充接口注释，避免了人工编写维护文档的麻烦。
 
 ## 技术栈
 
 ### 前端
 
-1. Vue 3 开发框架（提高页面开发的效率）
-2. Vant UI（基于 Vue 的移动端组件库）
-3. Vite 2（打包工具，快！）
+1. Vue 3 开发框架
+2. Vant UI
+3. Vite 2
 
 ### 后端
 
 1. Java 编程语言 + SpringBoot 框架
-2. SpringMVC + MyBatis + MyBatis Plus（提高开发效率）
+2. SpringMVC + MyBatis + MyBatis Plus
 3. MySQL 数据库
 4. Redis 缓存
-5. Swagger + Knife4j 接口文档
+5. Redisson分布式锁
+6. Spring Scheduler定时任务
+7. Gson JSON序列化库
+8. Swagger + Knife4j 接口文档
+9. 最短编辑距离算法
+
+
 
 ## 页面截图                                                                                                                                                                              
 登录
 
-![登录](https://github.com/jieyi123/yupao-project/blob/master/images/2.png)
+![登录](images/2.png)
 
 个人信息
 
-![个人信息](https://github.com/jieyi123/yupao-project/blob/master/images/6.png)
+![个人信息](images/6.png)
 
 标签
 
-![标签](https://github.com/jieyi123/yupao-project/blob/master/images/3.png)
+![标签](images/3.png)
 
 主页
 
-![主页](https://github.com/jieyi123/yupao-project/blob/master/images/1.png)
+![主页](images/1.png)
 
 队伍
 
-![队伍](https://github.com/jieyi123/yupao-project/blob/master/images/4.png)
+![队伍](images/4.png)
 
 队伍详情
 
-![队伍详情](https://github.com/jieyi123/yupao-project/blob/master/images/5.png)
+![队伍详情](images/5.png)
+
