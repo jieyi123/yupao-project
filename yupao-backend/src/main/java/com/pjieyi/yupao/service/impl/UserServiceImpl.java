@@ -221,7 +221,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public String getCaptcha(String phone){
         String code=generateValidateCode(6).toString();
         redisTemplate.opsForValue().set(USER_LOGIN_CAPTCHA+phone,code,2, TimeUnit.MINUTES);
-        //smsUtils.sendMessage("originai","SMS_464995252",phone,code);
+        smsUtils.sendMessage("originai","SMS_464995252",phone,code);
         log.info("验证码："+code);
         return code;
     }

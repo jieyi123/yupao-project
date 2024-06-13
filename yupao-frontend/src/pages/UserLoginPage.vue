@@ -7,8 +7,8 @@ import {showNotify, showToast} from "vant";
 import {getLove} from "../api/common.ts";
 const route = useRoute();
 const router=useRouter();
-const userAccount = ref('user');
-const userPassword = ref('12345678');
+const userAccount = ref('');
+const userPassword = ref('');
 
 // 获取滚动通知
 const tips = ref()
